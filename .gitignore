@@ -1,0 +1,25 @@
+# Node
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.local
+
+# Rust / Tauri
+src-tauri/target/
+src-tauri/gen/
+src-tauri/.cargo/
+**/*.rs.bk
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.log
+
+# Env
+.env
+.env.local
+
+# AppImage build artifacts
+*.AppImage
