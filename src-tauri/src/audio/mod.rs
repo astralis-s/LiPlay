@@ -87,8 +87,6 @@ enum Command {
 pub struct Engine {
     tx: mpsc::UnboundedSender<Command>,
     state: Arc<Mutex<PlaybackState>>,
-    fft_consumer: Arc<Mutex<Option<ringbuf::HeapCons<f32>>>>,
-    sample_rate: Arc<std::sync::atomic::AtomicU32>,
 }
 
 impl Engine {
@@ -111,9 +109,9 @@ impl Engine {
         std::thread::spawn(move || run_engine_blocking(app_c, rx, s_clone, f_clone, sr_clone));
 
         // FFT pump on the Tokio runtime  emits 32 magnitude bins at 30 Hz.
-        spawn_fft_pump(app, fft_consumer.clone(), sample_rate.clone());
+        spawn_fft_pump(app, fft_consumer, sample_rate);
 
-        Ok(Self { tx, state, fft_consumer, sample_rate })
+        Ok(Self { tx, state })
     }
 
     pub fn snapshot(&self) -> PlaybackState { self.state.lock().clone() }
