@@ -36,8 +36,11 @@ pub struct LocalServerInfo {
 
 #[tauri::command]
 pub async fn local_server_info(state: State<'_, AppState>) -> CmdResult<LocalServerInfo> {
-    let port = state.server.bind_port;
-    let host = state.server.local_ip
+    let guard = state.server.lock();
+    let server = guard.as_ref().ok_or_else(||
+        CmdError::Invalid("local server not ready yet".into()))?;
+    let port = server.bind_port;
+    let host = server.local_ip
         .map(|ip| ip.to_string())
         .unwrap_or_else(|| "127.0.0.1".into());
     Ok(LocalServerInfo {

@@ -18,7 +18,7 @@ pub struct AppState {
     pub paths: paths::AppPaths,
     pub audio: Arc<audio::Engine>,
     pub http: reqwest::Client,
-    pub server: sync::Server,
+    pub server: parking_lot::Mutex<Option<sync::Server>>,
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -43,17 +43,29 @@ pub fn run() {
                 let http = reqwest::Client::builder()
                     .user_agent("LiPlay/0.1 (+https://liplay.app)")
                     .build()?;
-                let server = sync::Server::start(paths.clone(), db.clone()).await?;
-                sync::bridge_events(server.clone(), handle.clone());
-                Ok::<_, anyhow::Error>(AppState { db, paths, audio, http, server })
+                Ok::<_, anyhow::Error>(AppState {
+                    db, paths, audio, http,
+                    server: parking_lot::Mutex::new(None),
+                })
             })?;
 
             app.manage(state);
 
-            // OSD window is no longer created in setup() - it was the
-            // trigger for a tao 0.34.8 panic on some Linux compositors.
-            // The frontend now calls `ensure_osd` once the main window
-            // has rendered, by which point GTK + tao are fully initialized.
+            // Local sync + Listen Together server is started lazily after the
+            // main window has rendered. mdns-sd and axum bring in extra GTK /
+            // network init paths; deferring them keeps setup() small enough
+            // that any compositor quirks don't compound at startup.
+            let app_handle_for_server = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                tokio::time::sleep(std::time::Duration::from_millis(2_000)).await;
+                let st = app_handle_for_server.state::<AppState>();
+                let server = match sync::Server::start(st.paths.clone(), st.db.clone()).await {
+                    Ok(s)  => s,
+                    Err(e) => { tracing::warn!("local server unavailable: {e:#}"); return; }
+                };
+                sync::bridge_events(server.clone(), app_handle_for_server.clone());
+                *st.server.lock() = Some(server);
+            });
 
             Ok(())
         })
