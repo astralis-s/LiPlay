@@ -1,7 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { convertFileSrc } from "@tauri-apps/api/core";
-import type { LyricsPayload, PlaybackState, Playlist, Track } from "./types";
+import type { DspMode, LyricsPayload, PlaybackState, Playlist, Track } from "./types";
 
 export interface PathsInfo {
   root: string;
@@ -61,6 +61,18 @@ export const api = {
   setEq:   (gainsDb: number[]) => invoke<void>("set_eq", { bands: { gains_db: gainsDb } }),
   setCrossfade:     (ms: number) => invoke<void>("set_crossfade", { ms }),
   setNormalization: (enabled: boolean) => invoke<void>("set_normalization", { enabled }),
+  setDspMode:       (mode: DspMode) => invoke<void>("set_dsp_mode", { mode }),
+
+  // Playlist covers
+  setPlaylistCoverUpload: (playlistId: string, imageBytes: Uint8Array) =>
+    invoke<string>("set_playlist_cover_upload", { playlistId, imageBytes: Array.from(imageBytes) }),
+  setPlaylistCoverCollage: (playlistId: string) =>
+    invoke<string>("set_playlist_cover_collage", { playlistId }),
+
+  // Local server / Listen Together
+  localServerInfo: () =>
+    invoke<{ host: string; port: number; url: string; ws_url: string }>("local_server_info"),
+  listenTogetherQr: () => invoke<string>("listen_together_qr"),
 };
 
 export function onPosition(cb: (s: PlaybackState) => void): Promise<UnlistenFn> {

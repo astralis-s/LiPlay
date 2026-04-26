@@ -109,6 +109,7 @@ pub async fn delete_track(state: State<'_, AppState>, id: String) -> CmdResult<(
 pub struct Playlist {
     pub id: String,
     pub name: String,
+    pub cover_path: Option<String>,
     pub created_at: String,
 }
 
@@ -123,15 +124,17 @@ pub async fn create_playlist(state: State<'_, AppState>, name: String) -> CmdRes
         .execute(&state.db.pool).await?;
     let row: (String,) = sqlx::query_as("SELECT created_at FROM playlists WHERE id = ?")
         .bind(&id).fetch_one(&state.db.pool).await?;
-    Ok(Playlist { id, name, created_at: row.0 })
+    Ok(Playlist { id, name, cover_path: None, created_at: row.0 })
 }
 
 #[tauri::command]
 pub async fn list_playlists(state: State<'_, AppState>) -> CmdResult<Vec<Playlist>> {
-    let rows: Vec<(String, String, String)> =
-        sqlx::query_as("SELECT id, name, created_at FROM playlists ORDER BY created_at DESC")
-            .fetch_all(&state.db.pool).await?;
-    Ok(rows.into_iter().map(|(id, name, created_at)| Playlist { id, name, created_at }).collect())
+    let rows: Vec<(String, String, Option<String>, String)> = sqlx::query_as(
+        "SELECT id, name, cover_path, created_at FROM playlists ORDER BY created_at DESC",
+    ).fetch_all(&state.db.pool).await?;
+    Ok(rows.into_iter().map(|(id, name, cover_path, created_at)| Playlist {
+        id, name, cover_path, created_at,
+    }).collect())
 }
 
 #[tauri::command]
@@ -167,10 +170,56 @@ pub async fn remove_from_playlist(
 
 #[tauri::command]
 pub async fn delete_playlist(state: State<'_, AppState>, id: String) -> CmdResult<()> {
+    if let Some(name) = sqlx::query_scalar::<_, Option<String>>(
+        "SELECT cover_path FROM playlists WHERE id = ?",
+    ).bind(&id).fetch_optional(&state.db.pool).await?.flatten() {
+        crate::playlist_cover::delete_cover(&state.paths, &name);
+    }
     sqlx::query("DELETE FROM playlists WHERE id = ?")
         .bind(&id)
         .execute(&state.db.pool).await?;
     Ok(())
+}
+
+#[tauri::command]
+pub async fn set_playlist_cover_upload(
+    state: State<'_, AppState>,
+    playlist_id: String,
+    image_bytes: Vec<u8>,
+) -> CmdResult<String> {
+    let name = crate::playlist_cover::save_uploaded(&image_bytes, &playlist_id, &state.paths)?;
+    sqlx::query("UPDATE playlists SET cover_path = ? WHERE id = ?")
+        .bind(&name).bind(&playlist_id)
+        .execute(&state.db.pool).await?;
+    Ok(name)
+}
+
+#[tauri::command]
+pub async fn set_playlist_cover_collage(
+    state: State<'_, AppState>,
+    playlist_id: String,
+) -> CmdResult<String> {
+    let covers: Vec<Option<String>> = sqlx::query_scalar(
+        r#"
+        SELECT t.cover_path
+          FROM playlist_tracks pt
+          JOIN tracks t ON t.id = pt.track_id
+         WHERE pt.playlist_id = ?
+         ORDER BY pt.position
+         LIMIT 4
+        "#,
+    )
+    .bind(&playlist_id)
+    .fetch_all(&state.db.pool).await?;
+    let files: Vec<String> = covers.into_iter().flatten().collect();
+    if files.is_empty() {
+        return Err(super::CmdError::Invalid("no covers in playlist".into()));
+    }
+    let name = crate::playlist_cover::build_collage(&files, &playlist_id, &state.paths)?;
+    sqlx::query("UPDATE playlists SET cover_path = ? WHERE id = ?")
+        .bind(&name).bind(&playlist_id)
+        .execute(&state.db.pool).await?;
+    Ok(name)
 }
 
 #[tauri::command]

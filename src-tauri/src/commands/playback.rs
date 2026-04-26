@@ -1,7 +1,7 @@
 use tauri::State;
 
 use super::CmdResult;
-use crate::audio::EqBands;
+use crate::audio::{DspMode, EqBands};
 use crate::library::media_path;
 use crate::AppState;
 
@@ -42,4 +42,8 @@ pub async fn set_crossfade(state: State<'_, AppState>, ms: u32) -> CmdResult<()>
 #[tauri::command]
 pub async fn set_normalization(state: State<'_, AppState>, enabled: bool) -> CmdResult<()> {
     state.audio.set_normalization(enabled); Ok(())
+}
+#[tauri::command]
+pub async fn set_dsp_mode(state: State<'_, AppState>, mode: DspMode) -> CmdResult<()> {
+    state.audio.set_dsp_mode(mode); Ok(())
 }

@@ -9,10 +9,13 @@ import BottomBar from "@/components/layout/BottomBar";
 import KaraokeMode from "@/components/karaoke/KaraokeMode";
 import Equalizer from "@/components/equalizer/Equalizer";
 import ThemePicker from "@/components/theme/ThemePicker";
+import ListenTogether from "@/components/listen/ListenTogether";
+import StandbyMode from "@/components/standby/StandbyMode";
 
 import { usePlayer } from "@/stores/playerStore";
 import { useTheme } from "@/stores/themeStore";
 import { useUi } from "@/stores/uiStore";
+import { useIdle } from "@/hooks/useIdle";
 import { springStage } from "@/animations/springs";
 import { ensurePaths, toAssetUrl } from "@/lib/tauri";
 
@@ -25,7 +28,8 @@ export default function App() {
   const current = usePlayer((s) => s.current);
   const next = usePlayer((s) => s.next);
 
-  const { eqOpen, closeEq, themeOpen, closeTheme } = useUi();
+  const { eqOpen, closeEq, themeOpen, closeTheme, listenOpen, closeListen } = useUi();
+  const idle = useIdle(120_000);
 
   // Auto-advance: when sink finishes (position close to duration AND playing
   // becomes false from the engine), call next() once.
@@ -81,6 +85,8 @@ export default function App() {
       <KaraokeMode />
       <Equalizer open={eqOpen} onClose={closeEq} />
       <ThemePicker open={themeOpen} onClose={closeTheme} />
+      <ListenTogether open={listenOpen} onClose={closeListen} />
+      <StandbyMode active={idle} />
     </div>
   );
 }

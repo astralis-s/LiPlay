@@ -30,7 +30,7 @@
         "enable": true,
         "scope": ["$APPDATA/**", "$APPLOCALDATA/**", "$HOME/.local/share/LiPlay/**"]
       },
-      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost data: blob:; media-src 'self' asset: https://asset.localhost blob:; connect-src 'self' ipc: http://ipc.localhost https://lrclib.net; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'"
+      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost data: blob:; media-src 'self' asset: https://asset.localhost blob:; connect-src 'self' ipc: http://ipc.localhost https://lrclib.net http://*.local:* http://192.168.*.*:* http://10.*.*.*:* http://172.*.*.*:* ws://*.local:* ws://192.168.*.*:* ws://10.*.*.*:* ws://172.*.*.*:*; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'"
     }
   },
   "bundle": {

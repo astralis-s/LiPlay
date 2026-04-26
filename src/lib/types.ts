@@ -13,8 +13,11 @@ export interface Track {
 export interface Playlist {
   id: string;
   name: string;
+  cover_path: string | null;
   created_at: string;
 }
+
+export type DspMode = "off" | "slowed-reverb" | "nightcore";
 
 export interface PlaybackState {
   track_id: string | null;

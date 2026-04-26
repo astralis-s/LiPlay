@@ -10,6 +10,7 @@ export default function LeftSidebar() {
   const setView = useUi((s) => s.setView);
   const openEq = useUi((s) => s.openEq);
   const openTheme = useUi((s) => s.openTheme);
+  const openListen = useUi((s) => s.openListen);
 
   return (
     <AnimatePresence initial={false}>
@@ -53,6 +54,12 @@ export default function LeftSidebar() {
                 className="px-3 py-2 rounded-xl text-left text-sm text-muted hover:text-text hover:bg-elevated"
               >
                 Theme
+              </button>
+              <button
+                onClick={openListen}
+                className="px-3 py-2 rounded-xl text-left text-sm text-muted hover:text-text hover:bg-elevated"
+              >
+                Listen Together
               </button>
             </div>
           </div>

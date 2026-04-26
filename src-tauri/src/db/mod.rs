@@ -30,6 +30,11 @@ impl Db {
 
     pub async fn migrate(&self) -> Result<()> {
         sqlx::query(schema::SCHEMA_SQL).execute(&self.pool).await?;
+        // Idempotent post-create ALTERs for additive migrations. We swallow
+        // "duplicate column" errors instead of versioning the schema for now.
+        for stmt in schema::POST_CREATE_ALTERS {
+            let _ = sqlx::query(stmt).execute(&self.pool).await;
+        }
         Ok(())
     }
 }

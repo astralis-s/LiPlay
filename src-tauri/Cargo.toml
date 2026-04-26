@@ -58,6 +58,20 @@ lofty = "0.21"
 # rodio bundles cpal output + symphonia decoders + the source-combinator graph
 # we use for gapless, crossfade, EQ and normalization wrappers.
 rodio = { version = "0.19", default-features = false, features = ["symphonia-all"] }
+ringbuf = "0.4"           # SPSC ring for the FFT tap, lock-free
+rustfft = "6.2"           # for the screensaver spectrum analyser
+
+# --- Image processing (playlist covers, collages, downscaling) ---
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+
+# --- Local Wi-Fi sync + Listen Together ---
+mdns-sd = "0.11"
+axum = { version = "0.7", features = ["ws"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "fs"] }
+futures-util = "0.3"
+local-ip-address = "0.6"
+qrcode = { version = "0.14", default-features = false }
 
 # --- HTTP (LRCLIB) ---
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "gzip"] }

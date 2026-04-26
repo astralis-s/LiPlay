@@ -66,7 +66,7 @@ function VSlider({ value, min, max, step, onChange }: {
 }
 
 export default function Equalizer({ open, onClose }: Props) {
-  const { gainsDb, setBand, resetEq, crossfadeMs, setCrossfade, normalize, setNormalize } = useDsp();
+  const { gainsDb, setBand, resetEq, crossfadeMs, setCrossfade, normalize, setNormalize, mode, setMode } = useDsp();
 
   return (
     <AnimatePresence>
@@ -115,6 +115,33 @@ export default function Equalizer({ open, onClose }: Props) {
             <p className="mt-3 text-[11px] text-muted">
               Drag a band; double-click to reset that band to 0 dB.
             </p>
+
+            <div className="mt-5 pt-5 border-t border-outline">
+              <div className="text-xs uppercase tracking-wider text-muted mb-2">DSP mode</div>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { id: "off",            label: "Off"            },
+                  { id: "slowed-reverb",  label: "Slowed + Reverb" },
+                  { id: "nightcore",      label: "Nightcore"      },
+                ] as const).map((opt) => {
+                  const active = mode === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => setMode(opt.id)}
+                      className={[
+                        "py-2.5 rounded-xl text-sm transition",
+                        active
+                          ? "bg-text text-bg font-medium"
+                          : "bg-elevated text-text hover:bg-elevated/80",
+                      ].join(" ")}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <div className="grid grid-cols-2 gap-6 mt-5 pt-5 border-t border-outline">
               <label className="flex flex-col gap-2">

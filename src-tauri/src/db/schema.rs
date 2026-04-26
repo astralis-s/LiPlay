@@ -26,6 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_plays_track     ON plays(track_id);
 CREATE TABLE IF NOT EXISTS playlists (
     id         TEXT PRIMARY KEY,
     name       TEXT NOT NULL,
+    cover_path TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -44,3 +45,11 @@ CREATE TABLE IF NOT EXISTS lyrics (
     fetched_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 "#;
+
+/// Additive migrations applied after the CREATE TABLE bootstrap. Each is
+/// run once per process start; SQLite errors (e.g. "duplicate column") are
+/// silently ignored, so it's safe to add new ALTERs at the bottom and
+/// they'll only take effect on databases that don't already have them.
+pub const POST_CREATE_ALTERS: &[&str] = &[
+    "ALTER TABLE playlists ADD COLUMN cover_path TEXT",
+];

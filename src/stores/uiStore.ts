@@ -11,6 +11,7 @@ interface UiStore {
   karaoke: boolean;
   eqOpen: boolean;
   themeOpen: boolean;
+  listenOpen: boolean;
   view: View;
 
   toggleLeft: () => void;
@@ -20,6 +21,8 @@ interface UiStore {
   closeEq: () => void;
   openTheme: () => void;
   closeTheme: () => void;
+  openListen: () => void;
+  closeListen: () => void;
   setView: (v: View) => void;
 }
 
@@ -29,6 +32,7 @@ export const useUi = create<UiStore>((set) => ({
   karaoke: false,
   eqOpen: false,
   themeOpen: false,
+  listenOpen: false,
   view: { kind: "home" },
 
   toggleLeft:  () => set((s) => ({ leftOpen:  !s.leftOpen  })),
@@ -38,5 +42,7 @@ export const useUi = create<UiStore>((set) => ({
   closeEq:     () => set({ eqOpen: false }),
   openTheme:   () => set({ themeOpen: true }),
   closeTheme:  () => set({ themeOpen: false }),
+  openListen:  () => set({ listenOpen: true }),
+  closeListen: () => set({ listenOpen: false }),
   setView:     (view) => set({ view }),
 }));
