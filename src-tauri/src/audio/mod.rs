@@ -294,7 +294,7 @@ fn replay_gain_factor(path: &std::path::Path) -> Option<f32> {
     use lofty::probe::Probe;
     use lofty::tag::ItemKey;
 
-    let probed = Probe::open(path).ok()?.read().ok()?;
+    let probed = Probe::open(path).ok()?.guess_file_type().ok()?.read().ok()?;
     let tag = probed.primary_tag().or_else(|| probed.first_tag())?;
     let raw = tag.get_string(&ItemKey::ReplayGainTrackGain)?;
     // Tag looks like "-6.42 dB"; strip the suffix.

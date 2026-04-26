@@ -3,7 +3,8 @@ export type ThemeId =
   | "deep-dark"
   | "light-accent"
   | "dark-accent"
-  | "adaptive";
+  | "adaptive-light"
+  | "adaptive-dark";
 
 export interface ThemeTokens {
   bg: [number, number, number];
@@ -15,7 +16,7 @@ export interface ThemeTokens {
   outline: [number, number, number];
 }
 
-export const baseThemes: Record<Exclude<ThemeId, "adaptive">, ThemeTokens> = {
+export const baseThemes: Record<Exclude<ThemeId, "adaptive-light" | "adaptive-dark">, ThemeTokens> = {
   "clean-light": {
     bg: [250, 250, 252],
     surface: [255, 255, 255],

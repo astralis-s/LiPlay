@@ -40,6 +40,13 @@ impl Biquad {
         Self { b0: 1.0, b1: 0.0, b2: 0.0, a1: 0.0, a2: 0.0, z1: 0.0, z2: 0.0 }
     }
 
+    /// Clear delay-line state without touching the coefficients. Used after
+    /// a seek to avoid filter memory bleeding across the discontinuity.
+    pub fn clear_state(&mut self) {
+        self.z1 = 0.0;
+        self.z2 = 0.0;
+    }
+
     #[inline]
     pub fn process(&mut self, x: f32) -> f32 {
         // Transposed Direct Form II.

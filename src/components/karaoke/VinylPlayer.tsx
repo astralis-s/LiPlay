@@ -1,5 +1,5 @@
 import { motion, useAnimationFrame, useMotionValue, useTransform } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { memo, useEffect, useRef } from "react";
 
 interface Props {
   /** URL the WebView can render (use toAssetUrl(absPath) on app-data files). */
@@ -18,7 +18,7 @@ interface Props {
  * The tonearm is a separate <motion.div> rotated via a spring  it lifts
  * off (rotates "out") when paused and drops back when playing.
  */
-export default function VinylPlayer({ coverUrl, playing, targetDps = 200 }: Props) {
+function VinylPlayerImpl({ coverUrl, playing, targetDps = 200 }: Props) {
   const angle = useMotionValue(0);          // current rotation, degrees
   const speed = useRef(playing ? targetDps : 0); // current angular velocity
 
@@ -88,6 +88,8 @@ export default function VinylPlayer({ coverUrl, playing, targetDps = 200 }: Prop
     </div>
   );
 }
+
+export default memo(VinylPlayerImpl);
 
 function Grooves() {
   // Nine concentric rings  cheap "grooves" without large SVG.

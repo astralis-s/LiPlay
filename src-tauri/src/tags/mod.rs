@@ -2,11 +2,31 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::{Context, Result};
+use anyhow::Context;
 use lofty::config::WriteOptions;
+use lofty::file::TaggedFile;
 use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::*;
 use lofty::probe::Probe;
 use lofty::tag::{ItemKey, Tag};
+
+/// Open a media file with both extension hints and magic-byte fallback.
+///
+/// `Probe::open` only uses the extension to guess the format. Many files
+/// in the wild have generic / wrong / missing extensions; lofty then errs
+/// with "No format could be determined from the provided file" the moment
+/// you try to `read()`. Calling `guess_file_type()` explicitly forces a
+/// magic-byte sniff so we cover both paths.
+fn open_audio(path: &Path) -> anyhow::Result<TaggedFile> {
+    let probe = Probe::open(path)
+        .with_context(|| format!("opening {}", path.display()))?;
+    let probe = probe
+        .guess_file_type()
+        .with_context(|| format!("identifying {}", path.display()))?;
+    Ok(probe
+        .read()
+        .with_context(|| format!("reading tags of {}", path.display()))?)
+}
 use serde::{Deserialize, Serialize};
 
 use crate::paths::AppPaths;
@@ -27,7 +47,7 @@ pub struct ReadTags {
 }
 
 pub fn read(file: &Path) -> Result<ReadTags> {
-    let probed = Probe::open(file)?.read()?;
+    let probed = open_audio(file)?;
     let tag = probed.primary_tag().or_else(|| probed.first_tag());
     Ok(ReadTags {
         title: tag.and_then(|t| t.title().map(|s| s.to_string())).unwrap_or_default(),
@@ -41,7 +61,7 @@ pub fn read(file: &Path) -> Result<ReadTags> {
 /// file inside Media/. Touches only the requested fields; leaves cover art
 /// untouched here  use `set_cover` for art.
 pub fn write(file: &Path, payload: &TagPayload) -> Result<()> {
-    let mut tagged = Probe::open(file)?.read()?;
+    let mut tagged = open_audio(file)?;
 
     // Ensure we have a tag of the file's preferred type.
     let primary_type = tagged.primary_tag_type();
@@ -81,7 +101,7 @@ pub fn write_cover(
         _ => sniff_mime(&image_bytes),
     };
 
-    let mut tagged = Probe::open(file)?.read()?;
+    let mut tagged = open_audio(file)?;
     let primary_type = tagged.primary_tag_type();
     if tagged.primary_tag().is_none() {
         tagged.insert_tag(Tag::new(primary_type));

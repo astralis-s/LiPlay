@@ -11,6 +11,8 @@ import ManualSync from "./ManualSync";
 
 interface Props { trackId: string; }
 
+const SYNC_RE = /\[\d+:\d+/;
+
 export default function LyricsPanel({ trackId }: Props) {
   const [body, setBody] = useState<string>("");
   const [synced, setSynced] = useState(false);
@@ -18,6 +20,8 @@ export default function LyricsPanel({ trackId }: Props) {
   const [hint, setHint] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
 
   const position = usePlayer((s) => s.position_ms);
   const lines = parseLrc(body);
@@ -25,7 +29,7 @@ export default function LyricsPanel({ trackId }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    setHint(null); setBody(""); setSynced(false); setSource("");
+    setHint(null); setBody(""); setSynced(false); setSource(""); setEditing(false);
     api.loadLrc(trackId).then((p) => {
       if (cancelled) return;
       if (p) { setBody(p.body); setSynced(p.synced); setSource(p.source); }
@@ -51,11 +55,23 @@ export default function LyricsPanel({ trackId }: Props) {
     if (typeof path !== "string") return;
     try {
       const text = await readTextFile(path);
-      await api.saveLrc(trackId, text, /\[\d+:\d+/.test(text), "import");
+      await api.saveLrc(trackId, text, SYNC_RE.test(text), "import");
       setBody(text);
-      setSynced(/\[\d+:\d+/.test(text));
+      setSynced(SYNC_RE.test(text));
       setSource("import");
       setHint("Loaded .lrc");
+    } catch (e) { setHint(`Failed: ${errMsg(e)}`); }
+  }
+
+  async function saveEdit() {
+    try {
+      const isSynced = SYNC_RE.test(draft);
+      await api.saveLrc(trackId, draft, isSynced, "manual-edit");
+      setBody(draft);
+      setSynced(isSynced);
+      setSource("manual-edit");
+      setEditing(false);
+      setHint("Saved");
     } catch (e) { setHint(`Failed: ${errMsg(e)}`); }
   }
 
@@ -68,17 +84,28 @@ export default function LyricsPanel({ trackId }: Props) {
     >
       <div className="flex items-center justify-between">
         <h4 className="text-xs uppercase tracking-wider text-muted">Lyrics</h4>
-        {source && <span className="text-[10px] uppercase text-muted/70">{source}</span>}
+        {source && !editing && (
+          <span className="text-[10px] uppercase text-muted/70">{source}</span>
+        )}
       </div>
 
-      {body ? (
+      {editing ? (
+        <textarea
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          spellCheck={false}
+          className="min-h-[260px] p-3 rounded-xl bg-elevated text-text text-sm
+                     outline-none font-mono leading-relaxed resize-y"
+          placeholder="[mm:ss.cc]Line text"
+        />
+      ) : body ? (
         <div className="text-sm leading-relaxed text-text max-h-[260px] overflow-y-auto space-y-1">
           {lines.map((l, i) => (
             <div
               key={i}
               className={[
                 "transition-colors",
-                synced && i === active ? "text-text" : "text-muted",
+                synced && i === active ? "text-text font-medium" : "text-muted",
               ].join(" ")}
             >
               {l.text}
@@ -89,27 +116,50 @@ export default function LyricsPanel({ trackId }: Props) {
         <p className="text-xs text-muted">No lyrics yet.</p>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
-        <button
-          onClick={fetchOnline}
-          disabled={busy}
-          className="py-2 rounded-lg text-xs bg-elevated hover:bg-elevated/80 disabled:opacity-50"
-        >
-          {busy ? "..." : "LRCLIB"}
-        </button>
-        <button
-          onClick={importLrc}
-          className="py-2 rounded-lg text-xs bg-elevated hover:bg-elevated/80"
-        >
-          Open .lrc
-        </button>
-        <button
-          onClick={() => setManualOpen(true)}
-          className="py-2 rounded-lg text-xs bg-elevated hover:bg-elevated/80"
-        >
-          Manual
-        </button>
-      </div>
+      {editing ? (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={saveEdit}
+            className="py-2 rounded-lg text-xs bg-text text-bg font-medium"
+          >
+            Save
+          </button>
+          <button
+            onClick={() => { setEditing(false); setDraft(""); }}
+            className="py-2 rounded-lg text-xs bg-elevated hover:bg-elevated/80"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-2">
+          <button
+            onClick={fetchOnline}
+            disabled={busy}
+            className="py-2 rounded-lg text-xs bg-elevated hover:bg-elevated/80 disabled:opacity-50"
+          >
+            {busy ? "..." : "LRCLIB"}
+          </button>
+          <button
+            onClick={importLrc}
+            className="py-2 rounded-lg text-xs bg-elevated hover:bg-elevated/80"
+          >
+            Open .lrc
+          </button>
+          <button
+            onClick={() => setManualOpen(true)}
+            className="py-2 rounded-lg text-xs bg-elevated hover:bg-elevated/80"
+          >
+            Sync
+          </button>
+          <button
+            onClick={() => { setDraft(body); setEditing(true); }}
+            className="py-2 rounded-lg text-xs bg-elevated hover:bg-elevated/80"
+          >
+            Edit
+          </button>
+        </div>
+      )}
       {hint && <div className="text-[11px] text-muted">{hint}</div>}
 
       <ManualSync open={manualOpen} onClose={() => setManualOpen(false)} trackId={trackId} />

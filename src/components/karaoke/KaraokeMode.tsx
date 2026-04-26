@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import VinylPlayer from "./VinylPlayer";
 import LyricsScroller from "./LyricsScroller";
 import { useUi } from "@/stores/uiStore";
@@ -9,14 +9,18 @@ import { api, toAssetUrl } from "@/lib/tauri";
 import { parseLrc } from "@/lib/lrc";
 import type { ParsedLrcLine } from "@/lib/types";
 
-/**
- * Triggered from the bottom bar. Expands with a seamless layout animation
- * (Framer's `layoutId` carries the mini-cover into the vinyl label).
- */
+/** Kept separate so it can subscribe to position_ms without dragging
+ *  the whole karaoke section through a re-render every audio tick. */
+const LiveLyrics = memo(function LiveLyrics({ lines }: { lines: ParsedLrcLine[] }) {
+  const positionMs = usePlayer((s) => s.position_ms);
+  return <LyricsScroller lines={lines} positionMs={positionMs} />;
+});
+
 export default function KaraokeMode() {
   const open = useUi((s) => s.karaoke);
   const setKaraoke = useUi((s) => s.setKaraoke);
-  const { current, playing, position_ms } = usePlayer();
+  const current = usePlayer((s) => s.current);
+  const playing = usePlayer((s) => s.playing);
   const [lines, setLines] = useState<ParsedLrcLine[]>([]);
 
   useEffect(() => {
@@ -26,15 +30,14 @@ export default function KaraokeMode() {
       const cached = await api.loadLrc(current.id);
       const payload = cached ?? (await api.fetchLyrics(current.id));
       if (!cancelled && payload?.body) setLines(parseLrc(payload.body));
+      else if (!cancelled) setLines([]);
     })();
     return () => { cancelled = true; };
   }, [current?.id]);
 
   const coverUrl = useMemo(() => {
     if (!current?.cover_path) return null;
-    // Covers live in ~/.local/share/LiPlay/Covers/<file>.
-    // The Rust side returns just the file name; resolve via the asset protocol.
-    return toAssetUrl(`Covers/${current.cover_path}`);
+    return toAssetUrl(current.cover_path, "cover");
   }, [current?.cover_path]);
 
   return (
@@ -55,20 +58,23 @@ export default function KaraokeMode() {
             transition={springStage}
             className="h-full w-full flex"
           >
-            {/* Left 40% : vinyl */}
             <div className="w-[40%] h-full flex items-center justify-center p-12">
               <VinylPlayer coverUrl={coverUrl} playing={playing} />
             </div>
 
-            {/* Right 60% : lyrics */}
             <div className="w-[60%] h-full">
-              <LyricsScroller lines={lines} positionMs={position_ms} />
+              {lines.length > 0 ? (
+                <LiveLyrics lines={lines} />
+              ) : (
+                <div className="h-full flex items-center justify-center text-white/40 text-lg">
+                  No lyrics for this track yet.
+                </div>
+              )}
             </div>
 
-            {/* Close affordance */}
             <button
               onClick={() => setKaraoke(false)}
-              className="absolute top-5 right-6 text-white/60 hover:text-white text-sm tracking-wide"
+              className="absolute top-5 right-6 text-white/60 hover:text-white text-sm tracking-wider"
               aria-label="Exit karaoke"
             >
               CLOSE

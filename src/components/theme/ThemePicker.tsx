@@ -6,11 +6,12 @@ import type { ThemeId } from "@/theme/themes";
 import { springStage } from "@/animations/springs";
 
 const THEMES: { id: ThemeId; label: string; sub: string }[] = [
-  { id: "clean-light",   label: "Clean Light",  sub: "Default minimal palette" },
-  { id: "deep-dark",     label: "Deep Dark",    sub: "OLED-friendly" },
-  { id: "light-accent",  label: "Light + Accent", sub: "Custom accent color" },
-  { id: "dark-accent",   label: "Dark + Accent",  sub: "Custom accent on dark" },
-  { id: "adaptive",      label: "Adaptive",     sub: "From the album cover" },
+  { id: "clean-light",    label: "Clean Light",    sub: "Default minimal palette" },
+  { id: "deep-dark",      label: "Deep Dark",      sub: "OLED-friendly" },
+  { id: "light-accent",   label: "Light + Accent", sub: "Custom accent color" },
+  { id: "dark-accent",    label: "Dark + Accent",  sub: "Custom accent on dark" },
+  { id: "adaptive-light", label: "Adaptive Light", sub: "From the album cover" },
+  { id: "adaptive-dark",  label: "Adaptive Dark",  sub: "From the album cover" },
 ];
 
 interface Props { open: boolean; onClose: () => void; }
@@ -21,10 +22,8 @@ export default function ThemePicker({ open, onClose }: Props) {
 
   async function pick(next: ThemeId) {
     setTheme(next);
-    if (next === "adaptive" && current?.cover_path) {
-      const url = toAssetUrl(`Covers/${current.cover_path}`);
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      await refreshAdaptive(url, prefersDark);
+    if ((next === "adaptive-light" || next === "adaptive-dark") && current?.cover_path) {
+      await refreshAdaptive(toAssetUrl(current.cover_path, "cover"));
     }
   }
 
@@ -49,7 +48,7 @@ export default function ThemePicker({ open, onClose }: Props) {
             exit={{ y: 20, opacity: 0 }}
             transition={springStage}
             onClick={(e) => e.stopPropagation()}
-            className="w-[420px] bg-surface text-text rounded-3xl border border-outline p-5 shadow-2xl"
+            className="w-[440px] bg-surface text-text rounded-3xl border border-outline p-5 shadow-2xl"
           >
             <h3 className="text-lg font-medium mb-3">Theme</h3>
             <div className="flex flex-col gap-1">

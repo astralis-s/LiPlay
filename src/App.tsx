@@ -55,10 +55,9 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (themeId !== "adaptive" || !current?.cover_path) return;
-    const url = toAssetUrl(`Covers/${current.cover_path}`);
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    refreshAdaptive(url, prefersDark);
+    if (themeId !== "adaptive-light" && themeId !== "adaptive-dark") return;
+    if (!current?.cover_path) return;
+    refreshAdaptive(toAssetUrl(current.cover_path, "cover"));
   }, [themeId, current?.cover_path]);
 
   return (

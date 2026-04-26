@@ -46,8 +46,10 @@ pub fn import_file(src: &Path, paths: &AppPaths) -> Result<ImportedTrack> {
     let sha = stream_copy_with_hash(src, &dest_path)
         .with_context(|| format!("copying {} -> {}", src.display(), dest_path.display()))?;
 
-    // Probe metadata from the *destination* (the only path we'll ever read again).
-    let probe = Probe::open(&dest_path)?.read()?;
+    // Probe metadata from the *destination* (the only path we'll ever read
+    // again). Force magic-byte detection in addition to the extension hint
+    // so files with weird/missing extensions still parse.
+    let probe = Probe::open(&dest_path)?.guess_file_type()?.read()?;
     let props = probe.properties();
     let duration_ms = props.duration().as_millis() as i64;
 

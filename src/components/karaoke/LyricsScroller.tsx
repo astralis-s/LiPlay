@@ -11,70 +11,71 @@ interface Props {
 }
 
 /**
- * Kinetically-scrolling lyrics with a vertical transparency mask.
+ * Kinetically scrolling lyrics with a vertical transparency mask.
  *
- *   - The active line is stark white and sharp.
- *   - Lines further from the active index get progressively blurred
- *     (CSS blur filter) and faded.
- *   - The whole column translates with a soft spring so the active line
- *     stays vertically centered  no jank, no jump cuts.
- *   - A CSS mask-image creates a hard fade-to-transparent at the top/bottom
- *     edges so the lyrics appear to "emerge" from nothing.
+ * Performance notes:
+ *   * Only lines within `WINDOW` of the active index are rendered. With
+ *     long songs (200+ lines) the previous full-list render created
+ *     hundreds of Framer Motion springs every frame, which is what made
+ *     karaoke mode lag.
+ *   * Each visible line is positioned absolutely at `top: 50% + delta`,
+ *     so we don't depend on a giant translated container.
+ *   * Filter (blur) and color values are written via `style` instead of
+ *     animated through a spring  the active-line scroll itself is the
+ *     only spring, and it's on the parent container.
  */
-export default function LyricsScroller({ lines, positionMs, lineHeight = 56 }: Props) {
-  const active = useMemo(() => activeLineIndex(lines, positionMs), [lines, positionMs]);
 
-  // Center the active line: column starts 50% down the container, then offsets up
-  // by (active * lineHeight). Framer's spring smooths the y change.
-  const y = -active * lineHeight;
+const WINDOW = 14;
+
+export default function LyricsScroller({ lines, positionMs, lineHeight = 72 }: Props) {
+  const active = useMemo(() => activeLineIndex(lines, positionMs), [lines, positionMs]);
 
   return (
     <div
       className="relative h-full w-full overflow-hidden"
       style={{
-        // Vertical fade mask: opaque in the middle band, transparent at edges.
         WebkitMaskImage:
-          "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+          "linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)",
         maskImage:
-          "linear-gradient(to bottom, transparent 0%, black 18%, black 82%, transparent 100%)",
+          "linear-gradient(to bottom, transparent 0%, black 16%, black 84%, transparent 100%)",
       }}
     >
-      <motion.ul
-        className="absolute left-0 right-0 px-12 text-3xl font-medium text-white"
-        style={{ top: "50%" }}
-        animate={{ y }}
-        transition={{ type: "spring", stiffness: 140, damping: 26, mass: 0.9 }}
-      >
+      <div className="absolute left-0 right-0" style={{ top: "50%" }}>
         {lines.map((line, i) => {
-          const distance = Math.abs(i - active);
-          const isActive = i === active;
+          const distance = i - active;
+          if (Math.abs(distance) > WINDOW) return null;
 
-          // Blur scales with distance: 0px on active, +1.4px per line, clamp at 8.
-          const blur = Math.min(8, distance * 1.4);
-          // Opacity decays exponentially.
-          const opacity = isActive ? 1 : Math.max(0.18, Math.pow(0.72, distance));
-          // Subtle scale falloff.
-          const scale = isActive ? 1.0 : 0.96;
+          const isActive = distance === 0;
+          const absDist  = Math.abs(distance);
+          const blur     = isActive ? 0 : Math.min(7, absDist * 1.0);
+          const opacity  = isActive ? 1 : Math.max(0.18, Math.pow(0.74, absDist));
+          const scale    = isActive ? 1.0 : 0.94;
 
           return (
-            <motion.li
-              key={`${i}-${line.time}`}
-              className="leading-[56px] h-[56px] -mt-[28px] will-change-transform"
+            <motion.div
+              key={i}
+              className="absolute inset-x-0 px-16 will-change-transform text-center"
               initial={false}
               animate={{
-                filter: `blur(${blur}px)`,
+                top: distance * lineHeight,
                 opacity,
                 scale,
-                color: isActive ? "rgb(255 255 255)" : "rgb(255 255 255 / 0.85)",
               }}
-              transition={{ type: "spring", stiffness: 220, damping: 28 }}
-              style={{ height: lineHeight, lineHeight: `${lineHeight}px` }}
+              transition={{ type: "spring", stiffness: 160, damping: 26, mass: 0.9 }}
+              style={{
+                filter: blur > 0 ? `blur(${blur}px)` : undefined,
+                color: isActive ? "rgb(255 255 255)" : "rgb(255 255 255 / 0.85)",
+                fontWeight: isActive ? 800 : 700,
+                fontSize:    isActive ? "3.25rem" : "2.5rem",
+                lineHeight:  `${lineHeight}px`,
+                letterSpacing: "-0.01em",
+              }}
             >
-              {line.text || " "}
-            </motion.li>
+              {line.text || " "}
+            </motion.div>
           );
         })}
-      </motion.ul>
+      </div>
     </div>
   );
 }

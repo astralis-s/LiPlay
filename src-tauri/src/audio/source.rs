@@ -8,6 +8,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use parking_lot::Mutex;
+use rodio::source::SeekError;
 use rodio::Source;
 
 use super::dsp::EqChain;
@@ -49,4 +50,18 @@ where I: Source<Item = f32>,
     fn channels(&self) -> u16 { self.inner.channels() }
     fn sample_rate(&self) -> u32 { self.inner.sample_rate() }
     fn total_duration(&self) -> Option<Duration> { self.inner.total_duration() }
+
+    /// Forward seeks to the inner Source. Without this, `Sink::try_seek`
+    /// silently returns NotSupported because the wrapper chain reports no
+    /// seek capability  the seekbar in the UI then snaps back.
+    fn try_seek(&mut self, pos: Duration) -> Result<(), SeekError> {
+        // Reset the EQ state so the seek doesn't bleed filter memory across
+        // a discontinuity (causes a brief click otherwise).
+        let mut g = self.chains.lock();
+        for b in g.0.bands.iter_mut() { b.clear_state(); }
+        for b in g.1.bands.iter_mut() { b.clear_state(); }
+        drop(g);
+        self.channel_idx = 0;
+        self.inner.try_seek(pos)
+    }
 }
