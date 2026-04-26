@@ -25,6 +25,11 @@ export const api = {
   listPlaylists:  () => invoke<Playlist[]>("list_playlists"),
   addToPlaylist:  (playlistId: string, trackId: string) =>
     invoke<void>("add_to_playlist", { playlistId, trackId }),
+  removeFromPlaylist: (playlistId: string, trackId: string) =>
+    invoke<void>("remove_from_playlist", { playlistId, trackId }),
+  deletePlaylist: (id: string) => invoke<void>("delete_playlist", { id }),
+  playlistTracks: (playlistId: string) =>
+    invoke<Track[]>("playlist_tracks", { playlistId }),
   monthlyRecap:   (yearMonth: string) =>
     invoke<{ track_id: string; title: string; artist: string; plays: number }[]>(
       "monthly_recap", { yearMonth },

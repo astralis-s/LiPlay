@@ -14,6 +14,7 @@ pub enum CmdError {
     Io(String),
     #[error("db: {0}")]
     Db(String),
+    #[allow(dead_code)]
     #[error("audio: {0}")]
     Audio(String),
     #[error("invalid: {0}")]

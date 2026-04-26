@@ -1,6 +1,9 @@
 import { create } from "zustand";
 
-export type View = "home" | "library";
+export type View =
+  | { kind: "home" }
+  | { kind: "library" }
+  | { kind: "playlist"; id: string };
 
 interface UiStore {
   leftOpen: boolean;
@@ -9,6 +12,7 @@ interface UiStore {
   eqOpen: boolean;
   themeOpen: boolean;
   view: View;
+
   toggleLeft: () => void;
   toggleRight: () => void;
   setKaraoke: (v: boolean) => void;
@@ -25,7 +29,8 @@ export const useUi = create<UiStore>((set) => ({
   karaoke: false,
   eqOpen: false,
   themeOpen: false,
-  view: "home",
+  view: { kind: "home" },
+
   toggleLeft:  () => set((s) => ({ leftOpen:  !s.leftOpen  })),
   toggleRight: () => set((s) => ({ rightOpen: !s.rightOpen })),
   setKaraoke:  (karaoke) => set({ karaoke }),

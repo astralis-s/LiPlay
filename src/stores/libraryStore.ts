@@ -11,7 +11,9 @@ interface LibraryStore {
   importFromPaths: (paths: string[]) => Promise<void>;
   removeTrack: (id: string) => Promise<void>;
   createPlaylist: (name: string) => Promise<void>;
+  deletePlaylist: (id: string) => Promise<void>;
   addToPlaylist: (playlistId: string, trackId: string) => Promise<void>;
+  removeFromPlaylist: (playlistId: string, trackId: string) => Promise<void>;
 }
 
 export const useLibrary = create<LibraryStore>((set, get) => ({
@@ -45,7 +47,16 @@ export const useLibrary = create<LibraryStore>((set, get) => ({
     await get().refreshPlaylists();
   },
 
+  async deletePlaylist(id) {
+    await api.deletePlaylist(id);
+    set({ playlists: get().playlists.filter((p) => p.id !== id) });
+  },
+
   async addToPlaylist(playlistId, trackId) {
     await api.addToPlaylist(playlistId, trackId);
+  },
+
+  async removeFromPlaylist(playlistId, trackId) {
+    await api.removeFromPlaylist(playlistId, trackId);
   },
 }));

@@ -18,6 +18,10 @@
 
 html, body, #root { height: 100%; }
 
+/* Disable the native WebKit context menu and image drag/select. */
+*  { -webkit-user-drag: none; }
+img { -webkit-user-drag: none; pointer-events: auto; }
+
 /* Theme transitions: any color/background-color change crossfades in 320ms.
    Framer Motion handles the spatial animations; CSS handles palette. */
 * {

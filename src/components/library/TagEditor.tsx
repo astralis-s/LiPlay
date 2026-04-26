@@ -4,6 +4,7 @@ import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { readFile } from "@tauri-apps/plugin-fs";
 
 import { api } from "@/lib/tauri";
+import { errMsg } from "@/lib/errors";
 import { useLibrary } from "@/stores/libraryStore";
 import type { Track } from "@/lib/types";
 
@@ -27,7 +28,7 @@ export default function TagEditor({ track }: Props) {
       await api.writeTags(track.id, { title, artist, album });
       await refresh();
       setHint("Saved to file");
-    } catch (e) { setHint(`Failed: ${String(e)}`); }
+    } catch (e) { setHint(`Failed: ${errMsg(e)}`); }
     finally { setSaving(false); }
   }
 
@@ -44,7 +45,7 @@ export default function TagEditor({ track }: Props) {
       await api.setCover(track.id, bytes, mime);
       await refresh();
       setHint("Cover written into file");
-    } catch (e) { setHint(`Failed: ${String(e)}`); }
+    } catch (e) { setHint(`Failed: ${errMsg(e)}`); }
     finally { setSaving(false); }
   }
 

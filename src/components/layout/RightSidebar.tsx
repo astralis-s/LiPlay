@@ -3,12 +3,13 @@ import { useUi } from "@/stores/uiStore";
 import { usePlayer } from "@/stores/playerStore";
 import { springGlide } from "@/animations/springs";
 import TagEditor from "@/components/library/TagEditor";
+import LyricsPanel from "@/components/lyrics/LyricsPanel";
 import { toAssetUrl } from "@/lib/tauri";
 
 export default function RightSidebar() {
   const open = useUi((s) => s.rightOpen);
   const current = usePlayer((s) => s.current);
-  const cover = current?.cover_path ? toAssetUrl(`Covers/${current.cover_path}`) : null;
+  const cover = current?.cover_path ? toAssetUrl(current.cover_path, "cover") : null;
 
   return (
     <AnimatePresence initial={false}>
@@ -16,12 +17,12 @@ export default function RightSidebar() {
         <motion.aside
           key="right"
           initial={{ width: 0, opacity: 0 }}
-          animate={{ width: 340, opacity: 1 }}
+          animate={{ width: 360, opacity: 1 }}
           exit={{ width: 0, opacity: 0 }}
           transition={springGlide}
           className="h-full overflow-hidden border-l border-outline bg-surface"
         >
-          <div className="w-[340px] h-full overflow-y-auto p-5 flex flex-col gap-4">
+          <div className="w-[360px] h-full overflow-y-auto p-5 flex flex-col gap-4">
             <h3 className="text-xs uppercase tracking-wider text-muted">Now selected</h3>
 
             {current ? (
@@ -35,6 +36,7 @@ export default function RightSidebar() {
                   <div className="text-sm text-muted">{current.album}</div>
                 </div>
                 <TagEditor track={current} />
+                <LyricsPanel trackId={current.id} />
               </>
             ) : (
               <div className="text-sm text-muted">Select a track to see details.</div>

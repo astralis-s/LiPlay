@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { springGlide } from "@/animations/springs";
 import { useUi } from "@/stores/uiStore";
 import Library from "@/components/library/Library";
+import PlaylistView from "@/components/playlist/PlaylistView";
 import MonthlyRecap from "@/components/recap/MonthlyRecap";
 import { useLibrary } from "@/stores/libraryStore";
 import { usePlayer } from "@/stores/playerStore";
@@ -23,8 +24,10 @@ export default function CenterView() {
       transition={springGlide}
       className="flex-1 h-full overflow-y-auto px-10 py-8"
     >
-      {view === "library" ? (
+      {view.kind === "library" ? (
         <Library />
+      ) : view.kind === "playlist" ? (
+        <PlaylistView playlistId={view.id} />
       ) : (
         <>
           <h1 className="text-3xl font-medium tracking-tight text-text">Home</h1>
@@ -32,7 +35,7 @@ export default function CenterView() {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mt-6">
             {tracks.slice(0, 10).map((t, i) => {
-              const cover = t.cover_path ? toAssetUrl(`Covers/${t.cover_path}`) : null;
+              const cover = t.cover_path ? toAssetUrl(t.cover_path, "cover") : null;
               return (
                 <motion.button
                   key={t.id}
@@ -57,7 +60,7 @@ export default function CenterView() {
             <div className="mt-12 p-10 rounded-2xl border border-outline text-center">
               <p className="text-muted">Nothing yet.</p>
               <button
-                onClick={() => setView("library")}
+                onClick={() => setView({ kind: "library" })}
                 className="mt-3 px-4 py-2 rounded-xl bg-text text-bg text-sm font-medium"
               >
                 Go to Library to import files

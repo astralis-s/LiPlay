@@ -26,14 +26,14 @@ export default function LeftSidebar() {
             <NavItem
               icon={<IconHome />}
               label="Home"
-              active={view === "home"}
-              onClick={() => setView("home")}
+              active={view.kind === "home"}
+              onClick={() => setView({ kind: "home" })}
             />
             <NavItem
               icon={<IconLibrary />}
               label="Library"
-              active={view === "library"}
-              onClick={() => setView("library")}
+              active={view.kind === "library"}
+              onClick={() => setView({ kind: "library" })}
             />
 
             <div className="mt-6 mb-2 text-[11px] uppercase tracking-wider text-muted px-3">

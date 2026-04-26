@@ -153,6 +153,50 @@ pub async fn add_to_playlist(
     Ok(())
 }
 
+#[tauri::command]
+pub async fn remove_from_playlist(
+    state: State<'_, AppState>,
+    playlist_id: String,
+    track_id: String,
+) -> CmdResult<()> {
+    sqlx::query("DELETE FROM playlist_tracks WHERE playlist_id = ? AND track_id = ?")
+        .bind(&playlist_id).bind(&track_id)
+        .execute(&state.db.pool).await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn delete_playlist(state: State<'_, AppState>, id: String) -> CmdResult<()> {
+    sqlx::query("DELETE FROM playlists WHERE id = ?")
+        .bind(&id)
+        .execute(&state.db.pool).await?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn playlist_tracks(
+    state: State<'_, AppState>,
+    playlist_id: String,
+) -> CmdResult<Vec<Track>> {
+    let rows: Vec<(String, String, String, String, String, i64, Option<String>, i64, String)> =
+        sqlx::query_as(
+            "SELECT t.id, t.file_name, t.title, t.artist, t.album, t.duration_ms,
+                    t.cover_path, t.play_count, t.added_at
+               FROM playlist_tracks pt
+               JOIN tracks t ON t.id = pt.track_id
+              WHERE pt.playlist_id = ?
+              ORDER BY pt.position",
+        )
+        .bind(&playlist_id)
+        .fetch_all(&state.db.pool)
+        .await?;
+
+    Ok(rows.into_iter().map(|r| Track {
+        id: r.0, file_name: r.1, title: r.2, artist: r.3, album: r.4,
+        duration_ms: r.5, cover_path: r.6, play_count: r.7, added_at: r.8,
+    }).collect())
+}
+
 #[derive(Debug, Serialize)]
 pub struct RecapEntry {
     pub track_id: String,
