@@ -50,36 +50,10 @@ pub fn run() {
 
             app.manage(state);
 
-            // ============ OSD window =============================
-            // Frameless, always-on-top, click-through. Creation is deferred
-            // off the setup() critical path because tao's monitor / GTK
-            // initialization is racy on some Linux compositors  doing this
-            // synchronously during setup panics with
-            //   tao .../event_loop.rs: called Option::unwrap on None
-            // when primary_monitor() resolves to None mid-bootstrap.
-            //
-            // We also avoid `transparent(true)` and explicit `position()`
-            // for the same reason  the GTK transparency path requires a
-            // running compositor + valid monitor list.
-            let app_handle = app.handle().clone();
-            tauri::async_runtime::spawn(async move {
-                tokio::time::sleep(std::time::Duration::from_millis(400)).await;
-                let osd_url = tauri::WebviewUrl::App("index.html".into());
-                let build = tauri::WebviewWindowBuilder::new(&app_handle, "osd", osd_url)
-                    .title("LiPlay OSD")
-                    .decorations(false)
-                    .always_on_top(true)
-                    .skip_taskbar(true)
-                    .resizable(false)
-                    .focused(false)
-                    .inner_size(380.0, 110.0)
-                    .visible(false)
-                    .build();
-                match build {
-                    Ok(osd) => { let _ = osd.set_ignore_cursor_events(true); }
-                    Err(e)  => tracing::warn!("OSD window unavailable: {e:#}"),
-                }
-            });
+            // OSD window is no longer created in setup() - it was the
+            // trigger for a tao 0.34.8 panic on some Linux compositors.
+            // The frontend now calls `ensure_osd` once the main window
+            // has rendered, by which point GTK + tao are fully initialized.
 
             Ok(())
         })
@@ -116,6 +90,7 @@ pub fn run() {
             commands::playback::set_dsp_mode,
             commands::sync::local_server_info,
             commands::sync::listen_together_qr,
+            commands::sync::ensure_osd,
         ])
         .run(tauri::generate_context!())
         .expect("error while running LiPlay");

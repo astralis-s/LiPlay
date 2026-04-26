@@ -17,7 +17,7 @@ import { useTheme } from "@/stores/themeStore";
 import { useUi } from "@/stores/uiStore";
 import { useIdle } from "@/hooks/useIdle";
 import { springStage } from "@/animations/springs";
-import { ensurePaths, toAssetUrl } from "@/lib/tauri";
+import { api, ensurePaths, toAssetUrl } from "@/lib/tauri";
 
 export default function App() {
   const [splashDone, setSplashDone] = useState(false);
@@ -38,6 +38,9 @@ export default function App() {
   useEffect(() => {
     setTheme("clean-light");
     ensurePaths().catch(() => {});
+    // OSD window is created lazily by JS after the splash, so tao's GTK
+    // bootstrap has already completed and we don't race the event loop.
+    window.setTimeout(() => { api.ensureOsd().catch(() => {}); }, 1500);
     let unlisten: (() => void) | undefined;
     bind().then((fn) => { unlisten = fn; });
 

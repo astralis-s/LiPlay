@@ -1,8 +1,30 @@
 use serde::Serialize;
-use tauri::State;
+use tauri::{AppHandle, Manager, State, WebviewUrl, WebviewWindowBuilder};
 
-use super::CmdResult;
+use super::{CmdError, CmdResult};
 use crate::AppState;
+
+/// Build the cinematic OSD window on demand. Called from the frontend after
+/// the main window has finished its splash animation, so tao's GTK init has
+/// already settled  doing this in setup() races with primary-monitor
+/// resolution on some Linux compositors and panics.
+#[tauri::command]
+pub async fn ensure_osd(app: AppHandle) -> CmdResult<()> {
+    if app.get_webview_window("osd").is_some() { return Ok(()); }
+    let osd = WebviewWindowBuilder::new(&app, "osd", WebviewUrl::App("index.html".into()))
+        .title("LiPlay OSD")
+        .decorations(false)
+        .always_on_top(true)
+        .skip_taskbar(true)
+        .resizable(false)
+        .focused(false)
+        .inner_size(380.0, 110.0)
+        .visible(false)
+        .build()
+        .map_err(|e| CmdError::Invalid(format!("osd window: {e}")))?;
+    let _ = osd.set_ignore_cursor_events(true);
+    Ok(())
+}
 
 #[derive(Debug, Serialize)]
 pub struct LocalServerInfo {
