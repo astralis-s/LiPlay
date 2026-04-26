@@ -290,7 +290,6 @@ impl Player {
 /// Read ReplayGain track-gain (dB) from the file tags and convert to a
 /// linear amplitude factor. Returns None if the tag is absent.
 fn replay_gain_factor(path: &std::path::Path) -> Option<f32> {
-    use lofty::file::TaggedFileExt;
     use lofty::prelude::*;
     use lofty::probe::Probe;
     use lofty::tag::ItemKey;

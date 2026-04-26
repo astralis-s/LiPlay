@@ -57,7 +57,7 @@ lofty = "0.21"
 # --- Audio decoding & playback ---
 # rodio bundles cpal output + symphonia decoders + the source-combinator graph
 # we use for gapless, crossfade, EQ and normalization wrappers.
-rodio = { version = "0.19", features = ["symphonia-all"] }
+rodio = { version = "0.19", default-features = false, features = ["symphonia-all"] }
 
 # --- HTTP (LRCLIB) ---
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "gzip"] }

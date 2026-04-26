@@ -3,7 +3,6 @@ use std::path::Path;
 
 use anyhow::{Context, Result};
 use lofty::config::WriteOptions;
-use lofty::file::TaggedFileExt;
 use lofty::picture::{MimeType, Picture, PictureType};
 use lofty::prelude::*;
 use lofty::probe::Probe;
@@ -89,7 +88,10 @@ pub fn write_cover(
     }
     let tag = tagged.primary_tag_mut().expect("just inserted");
 
-    tag.remove_picture_type(PictureType::CoverFront);
+    // Drop every existing picture so the new front cover is unambiguous.
+    while tag.picture_count() > 0 {
+        tag.remove_picture(0);
+    }
     tag.push_picture(Picture::new_unchecked(
         PictureType::CoverFront,
         Some(mime.clone()),
