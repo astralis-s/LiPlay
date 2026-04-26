@@ -48,6 +48,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::library::get_paths,
             commands::library::import_tracks,
             commands::library::list_tracks,
             commands::library::delete_track,

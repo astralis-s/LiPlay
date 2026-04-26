@@ -21,6 +21,24 @@ pub struct Track {
     pub added_at: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct PathsInfo {
+    pub root: String,
+    pub media_dir: String,
+    pub covers_dir: String,
+    pub lyrics_dir: String,
+}
+
+#[tauri::command]
+pub async fn get_paths(state: State<'_, AppState>) -> CmdResult<PathsInfo> {
+    Ok(PathsInfo {
+        root:        state.paths.root.to_string_lossy().into(),
+        media_dir:   state.paths.media_dir.to_string_lossy().into(),
+        covers_dir:  state.paths.covers_dir.to_string_lossy().into(),
+        lyrics_dir:  state.paths.lyrics_dir.to_string_lossy().into(),
+    })
+}
+
 #[tauri::command]
 pub async fn import_tracks(
     state: State<'_, AppState>,

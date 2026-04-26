@@ -3,7 +3,17 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import type { LyricsPayload, PlaybackState, Playlist, Track } from "./types";
 
+export interface PathsInfo {
+  root: string;
+  media_dir: string;
+  covers_dir: string;
+  lyrics_dir: string;
+}
+
 export const api = {
+  // Paths
+  getPaths: () => invoke<PathsInfo>("get_paths"),
+
   // Library
   importTracks: (paths: string[]) => invoke<Track[]>("import_tracks", { paths }),
   listTracks:   () => invoke<Track[]>("list_tracks"),
@@ -52,8 +62,24 @@ export function onPosition(cb: (s: PlaybackState) => void): Promise<UnlistenFn> 
   return listen<PlaybackState>("liplay://position", (e) => cb(e.payload));
 }
 
-/** Convert an absolute path inside the app's data dir into a `tauri://` URL
- *  the WebView can render directly (used for covers and karaoke art). */
-export function toAssetUrl(absPath: string): string {
-  return convertFileSrc(absPath);
+/** Cached app data paths so cover/media URLs resolve synchronously. */
+let cachedPaths: PathsInfo | null = null;
+export async function ensurePaths(): Promise<PathsInfo> {
+  if (!cachedPaths) cachedPaths = await api.getPaths();
+  return cachedPaths;
+}
+export function pathsSync(): PathsInfo | null { return cachedPaths; }
+
+/** Resolve a stored cover/media file name (relative) to a tauri:// asset URL.
+ *  `kind` selects which subdir to join. Falls back to convertFileSrc directly
+ *  if the input is already absolute. */
+export function toAssetUrl(rel: string, kind: "cover" | "media" = "cover"): string {
+  if (rel.startsWith("/")) return convertFileSrc(rel);
+  const p = pathsSync();
+  if (!p) return "";
+  const base = kind === "cover" ? p.covers_dir : p.media_dir;
+  // Strip the legacy "Covers/" / "Media/" prefix some callers still pass.
+  const name = rel.replace(/^(Covers|Media)\//, "");
+  const sep = base.endsWith("/") ? "" : "/";
+  return convertFileSrc(`${base}${sep}${name}`);
 }

@@ -2,9 +2,15 @@ import { AnimatePresence, motion } from "framer-motion";
 import { IconHome, IconLibrary } from "@/components/icons/Icons";
 import { useUi } from "@/stores/uiStore";
 import { springGlide } from "@/animations/springs";
+import PlaylistList from "@/components/playlist/PlaylistList";
 
 export default function LeftSidebar() {
   const open = useUi((s) => s.leftOpen);
+  const view = useUi((s) => s.view);
+  const setView = useUi((s) => s.setView);
+  const openEq = useUi((s) => s.openEq);
+  const openTheme = useUi((s) => s.openTheme);
+
   return (
     <AnimatePresence initial={false}>
       {open && (
@@ -16,13 +22,39 @@ export default function LeftSidebar() {
           transition={springGlide}
           className="h-full overflow-hidden border-r border-outline bg-surface"
         >
-          <div className="w-[240px] p-4 flex flex-col gap-1">
-            <NavItem icon={<IconHome />} label="Home" />
-            <NavItem icon={<IconLibrary />} label="Library" />
-            <div className="mt-6 mb-2 text-[11px] uppercase tracking-wider text-muted">
+          <div className="w-[240px] h-full p-4 flex flex-col gap-1">
+            <NavItem
+              icon={<IconHome />}
+              label="Home"
+              active={view === "home"}
+              onClick={() => setView("home")}
+            />
+            <NavItem
+              icon={<IconLibrary />}
+              label="Library"
+              active={view === "library"}
+              onClick={() => setView("library")}
+            />
+
+            <div className="mt-6 mb-2 text-[11px] uppercase tracking-wider text-muted px-3">
               Playlists
             </div>
-            {/* Playlists are populated by hooks/usePlaylists.ts */}
+            <PlaylistList />
+
+            <div className="mt-auto pt-4 border-t border-outline flex flex-col gap-1">
+              <button
+                onClick={openEq}
+                className="px-3 py-2 rounded-xl text-left text-sm text-muted hover:text-text hover:bg-elevated"
+              >
+                Equalizer
+              </button>
+              <button
+                onClick={openTheme}
+                className="px-3 py-2 rounded-xl text-left text-sm text-muted hover:text-text hover:bg-elevated"
+              >
+                Theme
+              </button>
+            </div>
           </div>
         </motion.aside>
       )}
@@ -30,11 +62,18 @@ export default function LeftSidebar() {
   );
 }
 
-function NavItem({ icon, label }: { icon: React.ReactNode; label: string }) {
+function NavItem({
+  icon, label, active, onClick,
+}: { icon: React.ReactNode; label: string; active: boolean; onClick: () => void }) {
   return (
-    <button className="flex items-center gap-3 px-3 py-2 rounded-xl text-left
-                       hover:bg-elevated text-text">
-      <span className="text-muted">{icon}</span>
+    <button
+      onClick={onClick}
+      className={[
+        "flex items-center gap-3 px-3 py-2 rounded-xl text-left",
+        active ? "bg-elevated text-text" : "text-text hover:bg-elevated/60",
+      ].join(" ")}
+    >
+      <span className={active ? "text-accent" : "text-muted"}>{icon}</span>
       <span className="text-sm">{label}</span>
     </button>
   );

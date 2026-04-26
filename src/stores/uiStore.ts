@@ -1,19 +1,37 @@
 import { create } from "zustand";
 
+export type View = "home" | "library";
+
 interface UiStore {
   leftOpen: boolean;
   rightOpen: boolean;
   karaoke: boolean;
+  eqOpen: boolean;
+  themeOpen: boolean;
+  view: View;
   toggleLeft: () => void;
   toggleRight: () => void;
   setKaraoke: (v: boolean) => void;
+  openEq: () => void;
+  closeEq: () => void;
+  openTheme: () => void;
+  closeTheme: () => void;
+  setView: (v: View) => void;
 }
 
 export const useUi = create<UiStore>((set) => ({
   leftOpen: true,
   rightOpen: false,
   karaoke: false,
+  eqOpen: false,
+  themeOpen: false,
+  view: "home",
   toggleLeft:  () => set((s) => ({ leftOpen:  !s.leftOpen  })),
   toggleRight: () => set((s) => ({ rightOpen: !s.rightOpen })),
-  setKaraoke: (karaoke) => set({ karaoke }),
+  setKaraoke:  (karaoke) => set({ karaoke }),
+  openEq:      () => set({ eqOpen: true }),
+  closeEq:     () => set({ eqOpen: false }),
+  openTheme:   () => set({ themeOpen: true }),
+  closeTheme:  () => set({ themeOpen: false }),
+  setView:     (view) => set({ view }),
 }));
