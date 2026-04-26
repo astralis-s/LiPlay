@@ -2,7 +2,6 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::{Context, Result};
-use anyhow::Context;
 use lofty::config::WriteOptions;
 use lofty::file::TaggedFile;
 use lofty::picture::{MimeType, Picture, PictureType};
