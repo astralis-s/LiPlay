@@ -16,7 +16,7 @@
 //! Discovery uses mDNS-SD to advertise `_liplay._tcp.local.` with the bound
 //! port. Peers can query `_liplay._tcp.local.` to find each other.
 
-use std::net::{IpAddr, SocketAddr};
+use std::net::IpAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -27,7 +27,6 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::routing::get;
 use axum::Router;
-use futures_util::{SinkExt, StreamExt};
 use mdns_sd::{ServiceDaemon, ServiceInfo};
 use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
