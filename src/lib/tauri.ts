@@ -73,7 +73,6 @@ export const api = {
   localServerInfo: () =>
     invoke<{ host: string; port: number; url: string; ws_url: string }>("local_server_info"),
   listenTogetherQr: () => invoke<string>("listen_together_qr"),
-  ensureOsd:        () => invoke<void>("ensure_osd"),
 };
 
 export function onPosition(cb: (s: PlaybackState) => void): Promise<UnlistenFn> {

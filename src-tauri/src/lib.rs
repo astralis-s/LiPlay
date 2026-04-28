@@ -102,7 +102,6 @@ pub fn run() {
             commands::playback::set_dsp_mode,
             commands::sync::local_server_info,
             commands::sync::listen_together_qr,
-            commands::sync::ensure_osd,
         ])
         .run(tauri::generate_context!())
         .expect("error while running LiPlay");
